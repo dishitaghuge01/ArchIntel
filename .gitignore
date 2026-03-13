@@ -1,0 +1,64 @@
+# ==============================
+# Python
+# ==============================
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+.env/
+.venv/
+
+# ==============================
+# Jupyter
+# ==============================
+.ipynb_checkpoints/
+
+# ==============================
+# VS Code
+# ==============================
+.vscode/
+
+# ==============================
+# OS files
+# ==============================
+.DS_Store
+Thumbs.db
+
+# ==============================
+# Dataset (too large for Git)
+# ==============================
+cubicasa5k/
+
+# ==============================
+# Generated parser outputs
+# ==============================
+parsed_floorplans/
+
+# ==============================
+# Generated features
+# ==============================
+features/*.csv
+floorplan_features.csv
+rooms_dataset.csv
+dataset_with_dqi.csv
+floorplan_features_clean.csv
+# ==============================
+# Logs
+# ==============================
+*.log
+
+# ==============================
+# Images / figures (generated)
+# ==============================
+*.png
+*.jpg
+*.jpeg
+
+# ==============================
+# Model outputs (future)
+# ==============================
+*.pkl
+*.joblib
+models/
