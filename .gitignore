@@ -44,6 +44,7 @@ floorplan_features.csv
 rooms_dataset.csv
 dataset_with_dqi.csv
 floorplan_features_clean.csv
+feature_importance.csv
 # ==============================
 # Logs
 # ==============================
@@ -62,3 +63,5 @@ floorplan_features_clean.csv
 *.pkl
 *.joblib
 models/
+
+.env
