@@ -3,7 +3,11 @@ import os
 from dotenv import load_dotenv
 from groq import Groq
 
-from quality_check_model.context_builder import build_floorplan_context
+from quality_check_model.context_builder import (
+    build_floorplan_context,
+    build_floorplan_context_live,
+    summarize_parsed_data
+)
 
 load_dotenv()
 
@@ -16,11 +20,21 @@ conversation_history = []
 
 
 def build_prompt(context, question):
+    """
+    Construct the LLM prompt with floorplan context.
+    
+    Args:
+        context (dict): Context from context_builder
+        question (str): User's question about the floorplan
+        
+    Returns:
+        str: Formatted prompt for the LLM
+    """
 
-    metrics = context["metrics"]
-    parsed = context.get("parsed_floorplan", {})
-    suggestions = context["suggestions"]
-    feature_importance = context["feature_importance"]
+    metrics = context.get("metrics", {})
+    parsed = context.get("parsed_floorplan") or {}
+    suggestions = context.get("suggestions", [])
+    feature_importance = context.get("feature_importance", [])
 
     rooms = parsed.get("rooms", [])
     windows = parsed.get("windows", [])
@@ -113,7 +127,7 @@ DETECTED DESIGN ISSUES
 
 -----------------------------------
 IMPORTANT DESIGN FACTORS
-(Random Forest feature importance)
+(Top important features)
 -----------------------------------
 
 {json.dumps(feature_importance[:8], indent=2)}
@@ -154,10 +168,49 @@ Keep responses concise and relevant.
     return prompt
 
 
-def ask_floorplan_assistant(plan_id, question):
-
-    context = build_floorplan_context(plan_id)
-
+def ask_floorplan_assistant(source, question):
+    """
+    Ask the floorplan assistant a question.
+    
+    Supports two modes:
+    1. Legacy dataset-based: source = plan_id (int)
+    2. Live pipeline-based: source = pipeline_output (dict)
+    
+    Args:
+        source: Either plan_id (int) or pipeline_output (dict)
+        question (str): User's question about the floorplan
+        
+    Returns:
+        str: Assistant's response
+        
+    Example (legacy):
+        >>> answer = ask_floorplan_assistant(42, "How many rooms?")
+        
+    Example (live):
+        >>> from quality_check_model.pipeline import run_pipeline
+        >>> result = run_pipeline("floor.svg")
+        >>> answer = ask_floorplan_assistant(result, "How many rooms?")
+    """
+    
+    # ===================================
+    # Determine input type
+    # ===================================
+    
+    if isinstance(source, dict):
+        # Live pipeline output
+        context = build_floorplan_context_live(source)
+    elif isinstance(source, int):
+        # Legacy plan_id
+        context = build_floorplan_context(source)
+    else:
+        raise ValueError(
+            "source must be either plan_id (int) or pipeline_output (dict)"
+        )
+    
+    # ===================================
+    # Build prompt and get response
+    # ===================================
+    
     prompt = build_prompt(context, question)
 
     # store user question
@@ -193,6 +246,16 @@ def ask_floorplan_assistant(plan_id, question):
     return answer
 
 
+def reset_conversation():
+    """Reset conversation history for a new session."""
+    global conversation_history
+    conversation_history = []
+
+
+# ===================================
+# Legacy CLI (dataset-based)
+# ===================================
+
 if __name__ == "__main__":
 
     plan_id = int(input("Enter plan ID: "))
@@ -202,6 +265,8 @@ if __name__ == "__main__":
         question = input("\nAsk a question about the floorplan: ")
 
         if question.lower() in ["exit", "quit"]:
+            reset_conversation()
+            print("Exiting...")
             break
 
         answer = ask_floorplan_assistant(plan_id, question)
