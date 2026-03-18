@@ -12,6 +12,9 @@ import os
 import json
 import sys
 
+from pydantic import BaseModel
+from typing import Optional, Dict, Any
+
 from quality_check_model.pipeline import run_pipeline
 from quality_check_model.floorplan_ai_assistant import (
     ask_floorplan_assistant,
@@ -23,7 +26,7 @@ from quality_check_model.floorplan_ai_assistant import (
 # ================================================
 
 app = FastAPI(
-    title="Floorplan AI Assistant",
+    title="ArchIntel",
     description="Analyze floorplans with AI",
     version="1.0"
 )
@@ -56,15 +59,23 @@ async def analyze_floorplan(file: UploadFile = File(...)):
     # Run full pipeline
     result = run_pipeline(file_path, verbose=True)
 
-    return result
+    return {
+        "message": "Analysis complete",
+        "pipeline_result": result
+    }
 
 
 # ---------------------------
 # Ask Questions
 # ---------------------------
+class AskRequest(BaseModel):
+    question: str
+    plan_id: Optional[int] = None
+    pipeline_result: Optional[Dict[str, Any]] = None
+
+
 @app.post("/ask/")
-async def ask_question(plan_id: int = None, question: str = None, 
-                       pipeline_result: dict = None):
+async def ask_question(request: AskRequest):
     """
     Ask a question about the floorplan.
     
@@ -73,20 +84,18 @@ async def ask_question(plan_id: int = None, question: str = None,
     2. Live: Provide pipeline_result (from /analyze endpoint)
     """
     
-    if not question:
+    if not request.question:
         return {"error": "question parameter required"}
     
-    if pipeline_result:
-        # Live pipeline mode
-        source = pipeline_result
-    elif plan_id:
-        # Legacy dataset mode
-        source = plan_id
+    if request.pipeline_result:
+        source = request.pipeline_result
+    elif request.plan_id is not None:
+        source = request.plan_id
     else:
         return {"error": "Either plan_id or pipeline_result required"}
     
     try:
-        answer = ask_floorplan_assistant(source, question)
+        answer = ask_floorplan_assistant(source, request.question)
         return {"answer": answer}
     except Exception as e:
         return {"error": str(e)}
@@ -114,13 +123,31 @@ def cli_main():
     # =============================================
     # Step 1: Get SVG path
     # =============================================
-    
-    svg_path = input("Enter SVG file path: ").strip()
-    
+
+    svg_path = input("Enter SVG file path: ")
+
+    # Clean input
+    svg_path = svg_path.strip().replace('"', '')
+
+    # 🔥 FIX 1: Convert Git Bash path → Windows path
+    if svg_path.startswith("/c/"):
+        svg_path = "C:\\" + svg_path[3:].replace("/", "\\")
+
+    # 🔥 FIX 2: Convert backslashes properly
+    svg_path = os.path.normpath(svg_path)
+
+    # Debug
+    print("\n[DEBUG]")
+    print("CWD:", os.getcwd())
+    print("Resolved Path:", svg_path)
+
+    # 🔥 FIX 3: Check existence
     if not os.path.exists(svg_path):
-        print(f"Error: File not found: {svg_path}")
+        print(f"\n❌ Error: File not found: {svg_path}")
         return
-    
+
+    print("\n✅ File found:", svg_path)
+        
     # =============================================
     # Step 2: Run pipeline
     # =============================================

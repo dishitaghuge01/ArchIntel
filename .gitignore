@@ -45,6 +45,12 @@ rooms_dataset.csv
 dataset_with_dqi.csv
 floorplan_features_clean.csv
 feature_importance.csv
+
+# ==============================
+# Uploads (temporary files)
+# ==============================
+uploads/
+
 # ==============================
 # Logs
 # ==============================

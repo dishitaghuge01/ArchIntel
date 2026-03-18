@@ -92,7 +92,7 @@ def build_prompt(context, question):
         "habitable_room_types": habitable_room_types,
         "largest_room": largest_room_info,
         "window_count": window_count,
-        "dqi": metrics.get("DQI"),
+        "dqi": metrics.get("DQI") * 10 if metrics.get("DQI") is not None else None,
         "quality_class": metrics.get("quality_class")
     }
 

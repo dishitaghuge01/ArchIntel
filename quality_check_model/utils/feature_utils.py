@@ -1,6 +1,6 @@
 import networkx as nx
 import numpy as np
-from utils.graph_utils import build_graph
+from quality_check_model.utils.graph_utils import build_graph
 
 
 def compute_spatial_metrics(G):

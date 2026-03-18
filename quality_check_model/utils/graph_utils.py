@@ -1,6 +1,6 @@
 import networkx as nx
 from shapely.geometry import Polygon
-from utils.geometry_utils import share_wall
+from quality_check_model.utils.geometry_utils import share_wall
 
 
 def build_graph(rooms_data):
