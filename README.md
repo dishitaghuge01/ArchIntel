@@ -25,11 +25,11 @@ This project provides two integrated services for the real estate and architectu
 
 ### Key Capabilities
 
-- 📊 **Predictive Analytics**: Linear regression-based cost forecasting
-- 🏗️ **Architectural Analysis**: Extracts 20+ quantifiable design features from floorplans
-- 🤖 **AI-Powered Insights**: LLM-based Q&A and design suggestions via Groq integration
-- 🌐 **REST API**: FastAPI web service for seamless integration
-- 📈 **Quality Scoring**: Comprehensive Design Quality Index with 5-dimension evaluation
+-  **Predictive Analytics**: Linear regression-based cost forecasting
+-  **Architectural Analysis**: Extracts 20+ quantifiable design features from floorplans
+-  **AI-Powered Insights**: LLM-based Q&A and design suggestions via Groq integration
+-  **REST API**: FastAPI web service for seamless integration
+-  **Quality Scoring**: Comprehensive Design Quality Index with 5-dimension evaluation
 
 ---
 
