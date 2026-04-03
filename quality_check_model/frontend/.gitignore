@@ -1,0 +1,68 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Dependencies
+node_modules
+/node_modules
+
+# Production build
+dist
+dist-ssr
+*.local
+build
+.turbo
+
+# Testing
+coverage
+.nyc_output
+junit.xml
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Package manager lock files
+# Commit bun.lock OR package-lock.json, not bun.lockb (binary)
+bun.lockb
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+Thumbs.db
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+
+# IDE
+*.swp
+*.swo
+*~
+.vscode-settings.json
+
+# Build caches
+.eslintcache
+.tsc-cache
+.turbo
+
+# Playwright
+playwright/.cache
+.playwright
