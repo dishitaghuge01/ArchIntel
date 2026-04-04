@@ -23,7 +23,7 @@ const Index = () => {
         {isAnalyzing ? (
           <LoadingAnalysis />
         ) : activePlan ? (
-          <AnalysisView plan={activePlan} />
+          <AnalysisView planId={activePlanId!} />
         ) : (
           <UploadScreen />
         )}

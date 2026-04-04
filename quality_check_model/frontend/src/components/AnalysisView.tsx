@@ -2,10 +2,11 @@ import { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, AlertOctagon, AlertTriangle, Info } from 'lucide-react';
 import { FloorPlanAnalysis } from '@/lib/types';
 import { useAppStore } from '@/lib/store';
+import { useAskQuestion } from '@/hooks/use-api';
 import { cn } from '@/lib/utils';
 
 interface AnalysisViewProps {
-  plan: FloorPlanAnalysis;
+  planId: string; // Change from plan to planId
 }
 
 const severityConfig = {
@@ -19,6 +20,7 @@ const qualityColors: Record<string, string> = {
   Good: 'bg-[hsl(var(--info))]/15 text-[hsl(var(--info))]',
   Fair: 'bg-[hsl(var(--warning))]/15 text-[hsl(var(--warning))]',
   Poor: 'bg-destructive/15 text-destructive',
+  Average: 'bg-[hsl(var(--chart-4))]/15 text-[hsl(var(--chart-4))]', // Use amber/neutral color for Average
 };
 
 const dqiColor = (s: number) => {
@@ -28,10 +30,26 @@ const dqiColor = (s: number) => {
   return 'text-destructive';
 };
 
-export function AnalysisView({ plan }: AnalysisViewProps) {
-  const { sendMessage } = useAppStore();
+export function AnalysisView({ planId }: AnalysisViewProps) {
+  const { updatePlan } = useAppStore();
+  const { mutate: askQuestion, isPending } = useAskQuestion();
   const [input, setInput] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Use selector to get current plan from store
+  const plan = useAppStore((state) => state.plans.find(p => p.id === planId));
+
+  // Handle case where plan is not found
+  if (!plan) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <div className="text-center">
+          <h3 className="text-lg font-semibold text-foreground mb-2">Plan not found</h3>
+          <p className="text-muted-foreground">The selected floor plan could not be loaded.</p>
+        </div>
+      </div>
+    );
+  }
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -40,15 +58,59 @@ export function AnalysisView({ plan }: AnalysisViewProps) {
   }, [plan.chatHistory.length]);
 
   const handleSend = () => {
-    if (!input.trim()) return;
-    sendMessage(plan.id, input.trim());
+    console.log('=== CHAT DEBUG ===');
+    console.log('Input:', input.trim());
+    console.log('Plan sessionId:', plan.sessionId);
+    console.log('Plan ID:', plan.id);
+    console.log('isPending:', isPending);
+    
+    if (!input.trim()) {
+      console.log('Returning early: empty input');
+      return;
+    }
+    
+    // For demo mode or plans without session, use store's sendMessage
+    if (!plan.sessionId) {
+      console.log('Using demo mode sendMessage');
+      // This will use the store's demo logic
+      const { sendMessage } = useAppStore.getState();
+      sendMessage(plan.id, input.trim());
+      setInput('');
+      return;
+    }
+    
+    console.log('Calling askQuestion with:', { sessionId: plan.sessionId, question: input.trim() });
+    
+    // Add user message to local state immediately for better UX
+    const userMsg = {
+      id: `msg-${Date.now()}`,
+      role: 'user' as const,
+      content: input.trim(),
+      timestamp: Date.now(),
+    };
+    
+    // Update plan with new message
+    console.log('Updating plan with user message');
+    updatePlan(plan.id, {
+      chatHistory: [...plan.chatHistory, userMsg],
+    });
+    
+    // Auto-scroll to bottom after adding user message
+    setTimeout(() => {
+      if (scrollRef.current) {
+        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      }
+    }, 100);
+    
+    askQuestion({ sessionId: plan.sessionId, question: input.trim(), planId: plan.id });
     setInput('');
+    console.log('=== END CHAT DEBUG ===');
   };
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
-      <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-thin">
-        <div className="max-w-3xl mx-auto px-6 md:px-8 py-6 space-y-4">
+      <div ref={scrollRef} data-chat-container className="flex-1 overflow-y-auto scrollbar-thin">
+        <div className="max-w-3xl mx-auto px-4 md:px-6 py-6 space-y-4">
           {/* SVG preview */}
           {plan.svgContent && (
             <div className="w-14 h-14 rounded-lg border border-border bg-card overflow-hidden flex items-center justify-center p-1.5 ml-auto">
@@ -70,11 +132,11 @@ export function AnalysisView({ plan }: AnalysisViewProps) {
               <span className="text-xs text-muted-foreground">Rooms</span>
             </div>
             <div className="rounded-lg bg-card border border-border p-4 flex flex-col items-center justify-center">
-              <span className="text-2xl font-bold text-foreground">{plan.totalArea}</span>
+              <span className="text-2xl font-bold text-foreground">{plan.totalArea.toFixed(2)}</span>
               <span className="text-xs text-muted-foreground">m² Total</span>
             </div>
             <div className="rounded-lg bg-card border border-border p-4 flex flex-col items-center justify-center">
-              <span className={cn('text-2xl font-bold', dqiColor(plan.dqiScore))}>{plan.dqiScore}</span>
+              <span className={cn('text-2xl font-bold', dqiColor(plan.dqiScore))}>{plan.dqiScore.toFixed(1)}</span>
               <span className="text-xs text-muted-foreground">DQI Score</span>
               <span
                 className={cn(
@@ -110,7 +172,20 @@ export function AnalysisView({ plan }: AnalysisViewProps) {
                 return (
                   <div key={i} className={cn('flex gap-2 p-2.5 rounded-md text-sm', config.bg)}>
                     <Icon className={cn('h-4 w-4 mt-0.5 shrink-0', config.color)} />
-                    <span className="text-foreground">{s.message}</span>
+                    <div className="flex-1">
+                      {s.title && (
+                        <div className="font-medium text-foreground mb-1">{s.title}</div>
+                      )}
+                      <div className="text-muted-foreground">{s.message}</div>
+                      {/* Show metric and value if available (from backend suggestions) */}
+                      {s.metric && s.value && (
+                        <div className="flex gap-2 mt-1">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-muted text-muted-foreground">
+                            {s.metric}: {s.value}
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 );
               })}
@@ -122,18 +197,18 @@ export function AnalysisView({ plan }: AnalysisViewProps) {
             <div
               key={msg.id}
               className={cn(
-                'flex gap-2.5',
+                'flex gap-3',
                 msg.role === 'user' ? 'justify-end' : 'justify-start'
               )}
             >
               {msg.role === 'assistant' && (
-                <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                  <Bot className="h-3.5 w-3.5 text-primary" />
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                  <Bot className="h-4 w-4 text-primary" />
                 </div>
               )}
               <div
                 className={cn(
-                  'max-w-[75%] px-3.5 py-2.5 rounded-xl text-sm',
+                  'max-w-[80%] px-4 py-3 rounded-xl text-sm leading-relaxed',
                   msg.role === 'user'
                     ? 'bg-primary text-primary-foreground rounded-br-sm'
                     : 'bg-card border border-border text-foreground rounded-bl-sm'
@@ -142,8 +217,8 @@ export function AnalysisView({ plan }: AnalysisViewProps) {
                 {msg.content}
               </div>
               {msg.role === 'user' && (
-                <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center shrink-0">
-                  <User className="h-3.5 w-3.5 text-muted-foreground" />
+                <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0 mt-0.5">
+                  <User className="h-4 w-4 text-muted-foreground" />
                 </div>
               )}
             </div>
@@ -152,22 +227,31 @@ export function AnalysisView({ plan }: AnalysisViewProps) {
       </div>
 
       {/* Chat input */}
-      <div className="px-6 md:px-8 py-4 border-t border-border">
+      <div className="px-4 md:px-6 py-4 border-t border-border">
         <div className="max-w-3xl mx-auto relative">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            placeholder="Ask anything about this floor plan..."
-            className="w-full h-12 pl-4 pr-12 rounded-xl bg-card border border-border text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-ring/50 transition-shadow"
+            placeholder={
+              plan.sessionId 
+                ? "Ask anything about this floor plan..." 
+                : "Session expired. Please upload the floorplan again."
+            }
+            disabled={!plan.sessionId}
+            className="w-full h-12 pl-4 pr-12 rounded-xl bg-card border border-border text-sm text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-ring/50 transition-shadow disabled:opacity-50"
           />
           <button
             onClick={handleSend}
-            disabled={!input.trim()}
+            disabled={!input.trim() || isPending || !plan.sessionId}
             className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg bg-primary text-primary-foreground disabled:opacity-40 hover:opacity-90 transition-opacity"
           >
-            <Send className="h-4 w-4" />
+            {isPending ? (
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
           </button>
         </div>
       </div>

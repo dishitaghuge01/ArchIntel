@@ -6,6 +6,9 @@ export interface Room {
 export interface Suggestion {
   severity: 'critical' | 'warning' | 'info';
   message: string;
+  title?: string; // For backend suggestions with issue field
+  metric?: string; // For backend suggestions with metric field
+  value?: number; // For backend suggestions with value field
 }
 
 export interface FloorPlanAnalysis {
@@ -17,9 +20,10 @@ export interface FloorPlanAnalysis {
   roomCount: number;
   rooms: Room[];
   dqiScore: number;
-  qualityClass: 'Excellent' | 'Good' | 'Fair' | 'Poor';
+  qualityClass: 'Excellent' | 'Good' | 'Fair' | 'Poor' | 'Average'; // Include 'Average'
   suggestions: Suggestion[];
   chatHistory: ChatMessage[];
+  sessionId?: string; // Backend session ID
 }
 
 export interface ChatMessage {

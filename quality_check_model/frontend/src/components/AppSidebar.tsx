@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import {
   Search, PenLine, GitCompareArrows, ChevronLeft, ChevronRight,
-  Hexagon, Trash2, Clock, Sun, Moon,
+  Hexagon, Trash2, Clock, Sun, Moon, Zap, RotateCcw,
 } from 'lucide-react';
 import { useAppStore } from '@/lib/store';
+import { useResetSession } from '@/hooks/use-api';
 import { cn } from '@/lib/utils';
 
 export function AppSidebar() {
@@ -11,6 +12,7 @@ export function AppSidebar() {
     plans, activePlanId, sidebarOpen, toggleSidebar,
     setActivePlan, newChat, deletePlan, settings, updateSettings,
   } = useAppStore();
+  const { mutate: resetSession } = useResetSession();
   const [search, setSearch] = useState('');
 
   const filtered = plans.filter((p) =>
@@ -28,6 +30,10 @@ export function AppSidebar() {
 
   const toggleTheme = () => {
     updateSettings({ theme: settings.theme === 'dark' ? 'light' : 'dark' });
+  };
+
+  const toggleDemoMode = () => {
+    updateSettings({ demoMode: !settings.demoMode });
   };
 
   if (!sidebarOpen) {
@@ -110,6 +116,27 @@ export function AppSidebar() {
         <button className="w-full flex items-center gap-2 px-3 h-8 text-sm rounded-md hover:bg-[hsl(var(--sidebar-hover))] text-[hsl(var(--sidebar-fg))] transition-colors">
           <GitCompareArrows className="h-3.5 w-3.5" />
           <span>Compare Floor Plans</span>
+        </button>
+
+        <button
+          onClick={() => resetSession()}
+          className="w-full flex items-center gap-2 px-3 h-8 text-sm rounded-md hover:bg-[hsl(var(--sidebar-hover))] text-[hsl(var(--sidebar-fg))] transition-colors"
+        >
+          <RotateCcw className="h-3.5 w-3.5" />
+          <span>Reset Conversation</span>
+        </button>
+
+        <button
+          onClick={toggleDemoMode}
+          className={cn(
+            'w-full flex items-center gap-2 px-3 h-8 text-sm rounded-md transition-colors',
+            settings.demoMode 
+              ? 'bg-primary/10 text-primary hover:bg-primary/20' 
+              : 'hover:bg-[hsl(var(--sidebar-hover))] text-[hsl(var(--sidebar-fg))]'
+          )}
+        >
+          <Zap className="h-3.5 w-3.5" />
+          <span>{settings.demoMode ? 'Demo Mode ON' : 'Demo Mode OFF'}</span>
         </button>
       </div>
 
