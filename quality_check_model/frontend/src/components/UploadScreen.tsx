@@ -27,10 +27,10 @@ export function UploadScreen() {
   );
 
   const handleAnalyze = useCallback(() => {
-    if (!selectedFile) return;
+    if (!selectedFile || !preview) return;
     const name = selectedFile.name.replace('.svg', '');
-    analyzeSvg({ name, file: selectedFile });
-  }, [selectedFile, analyzeSvg]);
+    analyzeSvg({ name, file: selectedFile, svgContent: preview });
+  }, [selectedFile, preview, analyzeSvg]);
 
   const clearSelection = useCallback(() => {
     setSelectedFile(null);

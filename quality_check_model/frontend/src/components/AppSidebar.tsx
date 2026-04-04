@@ -6,6 +6,7 @@ import {
 import { useAppStore } from '@/lib/store';
 import { useResetSession } from '@/hooks/use-api';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 export function AppSidebar() {
   const {
@@ -15,9 +16,19 @@ export function AppSidebar() {
   const { mutate: resetSession } = useResetSession();
   const [search, setSearch] = useState('');
 
-  const filtered = plans.filter((p) =>
-    p.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = plans.filter((p) => {
+    const searchTerm = search.toLowerCase();
+    if (!searchTerm) return true;
+    
+    // Search in plan name
+    if (p.name.toLowerCase().includes(searchTerm)) return true;
+    
+    // Search in suggestions
+    return p.suggestions.some(s => 
+      s.message.toLowerCase().includes(searchTerm) || 
+      (s.title && s.title.toLowerCase().includes(searchTerm))
+    );
+  });
 
   const formatTime = (ts: number) => {
     const d = new Date(ts);
@@ -169,7 +180,15 @@ export function AppSidebar() {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  deletePlan(plan.id);
+                  toast(`Delete "${plan.name}"?`, {
+                    action: {
+                      label: 'Delete',
+                      onClick: () => deletePlan(plan.id),
+                    },
+                    cancel: {
+                      label: 'Cancel',
+                    },
+                  });
                 }}
                 className="opacity-0 group-hover:opacity-100 p-1 hover:text-destructive transition-all"
                 aria-label={`Delete ${plan.name}`}

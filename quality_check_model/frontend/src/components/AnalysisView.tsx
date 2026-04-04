@@ -113,7 +113,7 @@ export function AnalysisView({ planId }: AnalysisViewProps) {
         <div className="max-w-3xl mx-auto px-4 md:px-6 py-6 space-y-4">
           {/* SVG preview */}
           {plan.svgContent && (
-            <div className="w-14 h-14 rounded-lg border border-border bg-card overflow-hidden flex items-center justify-center p-1.5 ml-auto">
+            <div className="w-20 h-20 rounded-xl border-2 border-border bg-card shadow-sm overflow-hidden flex items-center justify-center p-2 ml-auto">
               <div
                 className="w-full h-full [&>svg]:w-full [&>svg]:h-full text-foreground"
                 dangerouslySetInnerHTML={{ __html: plan.svgContent }}
@@ -214,7 +214,11 @@ export function AnalysisView({ planId }: AnalysisViewProps) {
                     : 'bg-card border border-border text-foreground rounded-bl-sm'
                 )}
               >
-                {msg.content}
+                {msg.role === 'assistant' ? (
+                  <div className="whitespace-pre-wrap">{msg.content}</div>
+                ) : (
+                  msg.content
+                )}
               </div>
               {msg.role === 'user' && (
                 <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0 mt-0.5">
@@ -228,6 +232,23 @@ export function AnalysisView({ planId }: AnalysisViewProps) {
 
       {/* Chat input */}
       <div className="px-4 md:px-6 py-4 border-t border-border">
+        {/* Thinking indicator */}
+        {isPending && (
+          <div className="flex items-center gap-3 mb-3 max-w-3xl mx-auto">
+            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+              <Bot className="h-4 w-4 text-primary" />
+            </div>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span>ArchIntel is analyzing...</span>
+              <div className="flex gap-1">
+                <div className="w-1 h-1 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                <div className="w-1 h-1 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                <div className="w-1 h-1 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="max-w-3xl mx-auto relative">
           <input
             type="text"

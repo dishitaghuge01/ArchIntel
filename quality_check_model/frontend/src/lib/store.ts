@@ -89,9 +89,16 @@ export const useAppStore = create<AppState>((set, get) => ({
       if (typeof window !== 'undefined') {
         localStorage.setItem('archintel-plans', JSON.stringify(newPlans));
       }
+      
+      // If the deleted plan was active, switch to the most recent remaining plan
+      let newActivePlanId = s.activePlanId;
+      if (s.activePlanId === id) {
+        newActivePlanId = newPlans.length > 0 ? newPlans[0].id : null;
+      }
+      
       return {
         plans: newPlans,
-        activePlanId: s.activePlanId === id ? null : s.activePlanId,
+        activePlanId: newActivePlanId,
       };
     });
   },

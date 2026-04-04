@@ -25,36 +25,42 @@ export function useAnalyzeSvg() {
   const { addPlan, setActivePlan, setIsAnalyzing, settings } = useAppStore();
 
   return useMutation({
-    mutationFn: async ({ name, file }: { name: string; file: File }) => {
+    mutationFn: async ({ name, file, svgContent }: { name: string; file: File; svgContent: string }) => {
       if (settings.demoMode) {
         throw new Error('Cannot use real API in demo mode');
       }
       
       const response = await getApiClient().analyzeSvg(file);
-      return { name, response };
+      return { name, response, svgContent };
     },
     onMutate: () => {
       setIsAnalyzing(true);
     },
-    onSuccess: ({ name, response }) => {
+    onSuccess: ({ name, response, svgContent }) => {
       console.log('Analyze SVG success hook called with:', { name, response });
       
       if (!response.success || !response.data) {
         throw new Error(response.error || 'Analysis failed');
       }
 
-      const { session_id, summary, suggestions } = response.data;
-      console.log('Extracted data:', { session_id, summary, suggestions });
+      const { session_id, summary, suggestions, parsed } = response.data;
+      console.log('Extracted data:', { session_id, summary, suggestions, parsed });
+      
+      // Convert parsed rooms to frontend format
+      const rooms = parsed?.rooms?.map((room: any) => ({
+        name: room.type || 'Unknown Room',
+        area: Math.round(room.area * 100) / 100, // Round to 2 decimal places
+      })) || [];
       
       // Convert backend response to frontend format
       const newPlan = {
         id: `plan-${Date.now()}`,
         name,
         timestamp: Date.now(),
-        svgContent: '', // Will be set by the upload component
+        svgContent, // Store the SVG content
         totalArea: summary.total_area,
         roomCount: summary.num_rooms,
-        rooms: [], // Backend doesn't provide room details
+        rooms, // Use real room data
         dqiScore: summary.dqi_score,
         qualityClass: summary.quality_class,
         suggestions: suggestions.map(s => ({

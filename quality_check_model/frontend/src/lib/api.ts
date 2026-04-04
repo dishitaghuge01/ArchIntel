@@ -25,6 +25,7 @@ const RawAnalysisResponseSchema = z.object({
       value: z.number().optional(),
       recommendation: z.string(),
     })),
+    parsed: z.any(), // Add parsed data
   }),
   error: z.null().optional(),
 });
@@ -48,6 +49,7 @@ const AnalysisResponseSchema = z.object({
       metric: z.string().optional(), // Include metric if available
       value: z.number().optional(), // Include value if available
     })),
+    parsed: z.any(), // Add parsed data
   }),
   error: z.null().optional(),
 });

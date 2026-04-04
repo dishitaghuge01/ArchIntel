@@ -77,7 +77,10 @@ async def analyze_floorplan(file: UploadFile = File(...)):
                 result.get("summary", {}),
 
             "suggestions":
-                result.get("suggestions", [])
+                result.get("suggestions", []),
+
+            "parsed":
+                result.get("parsed", {})
 
         })
 
