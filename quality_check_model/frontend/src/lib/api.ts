@@ -259,9 +259,7 @@ let apiClient: ApiClient | null = null;
 
 export function createApiClient(config?: ApiClientConfig): ApiClient {
   const defaultConfig: ApiClientConfig = {
-    baseUrl: typeof window !== 'undefined' 
-      ? window.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'
-      : 'http://localhost:8000',
+    baseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000',
   };
 
   const finalConfig = { ...defaultConfig, ...config };

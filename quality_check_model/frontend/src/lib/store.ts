@@ -62,9 +62,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   isAnalyzing: false,
   settings: {
     demoMode: true,
-    apiBaseUrl: typeof window !== 'undefined' 
-      ? window.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'
-      : 'http://localhost:8000',
+    apiBaseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000',
     theme: getInitialTheme(),
   },
 
